@@ -82,7 +82,22 @@ const userLoginController = async (req, res)=>{
 }
 
 
+
+/**
+ * - User Logout Controller
+ * - POST /api/auth/logout
+ */
+const userLogoutController = async (req, res)=>{
+    res.clearCookie("token")
+    res.status(200).json({
+        message: "User Loggedout Successfully",
+    })
+}
+
+
+
 module.exports = {
     userRegisterController,
-    userLoginController
+    userLoginController,
+    userLogoutController
 }
