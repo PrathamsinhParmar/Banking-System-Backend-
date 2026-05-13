@@ -1,0 +1,34 @@
+const mongoose = require('mongoose')
+
+const accountSchema = new mongoose.Schema({
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "user",
+        required: [true, "Account must be associated with the user"],
+        index: true
+    },
+    status: {
+        type: String,
+        enum: {
+            values: [ "ACTIVE", "FROZEN", "CLOSED" ],
+            massage: "Status can be either ACTIVE, FROZEN or CLOSED"
+        },
+        default: "ACTIVE"
+    },
+    currency: {
+        type: String,
+        default: "INR",
+        required: [true, "Currency is required for creating an account"]
+    }
+},{
+    timestamps: true
+})
+
+accountSchema.index({    // Compound Index
+    user:1, 
+    status:1
+})
+
+const accountModel = mongoose.model("account", accountSchema)
+
+module.exports = accountModel

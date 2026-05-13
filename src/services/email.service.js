@@ -79,7 +79,7 @@ const sendRegestrationEmail = async (userEmail, name)=>{
                 <!-- Header -->
                 <tr>
                     <td align="center"
-                    style="background:linear-gradient(135deg,#4f46e5,#7c3aed); padding:35px 20px; color:white;">
+                    style="background: linear-gradient(135deg, #f12711, #f5af19); padding:35px 20px; color:white;">
                     
                     <h1 style="margin:0; font-size:32px;">
                         Backend Ledger
