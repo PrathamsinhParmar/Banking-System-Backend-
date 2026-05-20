@@ -9,7 +9,7 @@ const emailService = require('../services/email.service')
  */
 const userRegisterController = async (req, res)=>{
 
-    const { email, password, name } = req.body
+    const { email, password, name, systemUser } = req.body
     
     const isEmailExists = await userModel.findOne({
         email: email
@@ -23,7 +23,7 @@ const userRegisterController = async (req, res)=>{
     }
 
     const user = await userModel.create({
-        email, password, name
+        email, password, name, systemUser
     })
 
     const token = jwt.sign({
@@ -38,7 +38,8 @@ const userRegisterController = async (req, res)=>{
             _id: user._id,
             email: user.email,
             password: user.password,
-            name: user.name
+            name: user.name,
+            systemUser: user.systemUser
         },
         token
     })

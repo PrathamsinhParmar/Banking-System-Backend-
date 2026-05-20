@@ -31,26 +31,28 @@ accountSchema.index({    // Compound Index
 })
 
 
-accountSchema.methods.getBalance = async function(){
+accountSchema.methods.getBalance = async function () {
     const balanceData = await ledgerModel.aggregate([
-        { $match: {account: this._id }},
         {
-            $group:{
+            $match: { account: this._id }
+        },
+        {
+            $group: {
                 _id: null,
-                totalDebit:{
-                    $sum:{
+                totalDebit: {
+                    $sum: {
                         $cond: [
-                            { $ed: ["$type", "DEBIT"]},
-                            "amount",
+                            { $eq: ["$type", "DEBIT"] },
+                            "$amount",
                             0
                         ]
                     }
                 },
-                totalCredit:{
-                    $sum:{
+                totalCredit: {
+                    $sum: {
                         $cond: [
-                            { $eq: ["$type", "CREDIT"]},
-                            "amount",
+                            { $eq: ["$type", "CREDIT"] },
+                            "$amount",
                             0
                         ]
                     }
@@ -60,17 +62,19 @@ accountSchema.methods.getBalance = async function(){
         {
             $project: {
                 _id: 0,
-                balance: { $subtract: ["$totalCredit", "totalDebit"]}
+                balance: {
+                    $subtract: ["$totalCredit", "$totalDebit"]
+                }
             }
         }
-    ])
+    ]);
 
-    if(balanceData.length === 0){
-        return 0
+    if (balanceData.length === 0) {
+        return 0;
     }
 
-    return balanceData[0].balance
-}
+    return balanceData[0].balance;
+};
 
 const accountModel = mongoose.model("account", accountSchema)
 
