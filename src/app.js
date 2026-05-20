@@ -8,6 +8,10 @@ const app = express()
 app.use(express.json())
 app.use(cookieParser())
 
+app.get('/', (req, res)=>{
+    res.send("Banking System Is Up & Running !")
+})
+
 app.use('/api/auth', authRouter)
 
 app.use('/api/accounts', accountRouter)
