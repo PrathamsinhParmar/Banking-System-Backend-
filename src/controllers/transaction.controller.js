@@ -55,7 +55,7 @@ const createTransaction = async (req, res)=>{
      * 2. Validate idempotency key 
     */
 
-    const isTransactionAlreadyExists = transactionModel.findOne({
+    const isTransactionAlreadyExists = await transactionModel.findOne({
         idempotencyKey: idempotencyKey
     })
 
@@ -124,41 +124,57 @@ const createTransaction = async (req, res)=>{
      * 9. Commit MongoDB session
     */
 
-    const session = await mongoose.startSession()
-    session.startTransaction()
+    let transaction
+
+    try {
+        const session = await mongoose.startSession()
+        session.startTransaction()
 
 
-    const transaction = await transactionModel.create([{
-        fromAccount: fromAccount,
-        toAccount: toAccount,
-        status: "PENDING",
-        amount: amount,
-        idempotencyKey: idempotencyKey
-    }], { session })
+        const transaction = (await transactionModel.create([{
+            fromAccount: fromAccount,
+            toAccount: toAccount,
+            status: "PENDING",
+            amount: amount,
+            idempotencyKey: idempotencyKey
+        }], { session }))[ 0 ]
 
 
-    const debitLedgerEntry = await ledgerModel.create([{
-        account: fromAccount,
-        amount: amount,
-        transaction: transaction._id,
-        type: "DEBIT"
-    }], { session })
+        const debitLedgerEntry = await ledgerModel.create([{
+            account: fromAccount,
+            amount: amount,
+            transaction: transaction._id,
+            type: "DEBIT"
+        }], { session })
+        
+        await (()=>{
+            return new Promise((resolve) => setTimeout(resolve, 10 * 1000))
+        })()
 
 
-    const creditLedgerEntry = await ledgerModel.create([{
-        account: toAccount,
-        amount: amount,
-        transaction: transaction._id,
-        type: "CREDIT"
-    }], { session })
+        const creditLedgerEntry = await ledgerModel.create([{
+            account: toAccount,
+            amount: amount,
+            transaction: transaction._id,
+            type: "CREDIT"
+        }], { session })
 
-    transaction.status = "COMPLETED"
+        await transactionModel.findOneAndUpdate(
+            {_id: transaction._id},
+            {status: "COMPLETED"},
+            { session }
+        )
 
-    await transaction.save( { session } )
+        await session.commitTransaction()
+        session.endSession()
 
-    await session.commitTransaction()
-    session.endSession()
+    } catch (error) {
+        return res.status(400).json({
+            message: "Transaction is Peadning due to some errors, Please retry after sometimes!"
+        })
+    }
 
+    
 
     /**
      * 10. Send Email Notification 
